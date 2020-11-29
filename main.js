@@ -1,9 +1,5 @@
 "use strict";
 
-const inputWrapper = document.querySelector('.input-wrapper');
-const input = document.querySelector('.input');
-
-
 class TodoState {
     constructor() {
         this.todoItems = [];
@@ -23,7 +19,9 @@ class TodoState {
 
     getTodoId (elem) {
         this.todoItems.forEach(function(item) {
-            elem.setAttribute('data-key', item.id);
+            if (elem.dataset.name == item.name) {
+                elem.setAttribute('data-key', item.id);
+            }
         })
         return (elem.dataset.key);
     }
@@ -47,66 +45,88 @@ class TodoState {
 
 
 class TodoItem {
-    constructor(input) {
-        this.input = input;
+
+    constructor() {
+        this.inputWrapper = document.querySelector('.input-wrapper');
+        this.input = document.querySelector('.input');
+        this.myTodoList = new TodoState();
+    }
+
+    createElement(tag, className) {
+        let element = document.createElement(tag)
+        if (className) element.classList.add(className)
+        return element;
     }
 
     handleSubmit() {
-        let myTodoList = new TodoState();
-        input.addEventListener("keydown", function (event) {
-            if (event.keyCode === 13 && input.value !== "") {
 
-                let newTask = document.createElement("div");
-                newTask.classList.add("list-item");
-                inputWrapper.append(newTask);
+        this.input.addEventListener("keydown", (event) => {
+            if (event.keyCode === 13 && this.input.value !== "") {
 
+                let newTask = this.createElement("div", "list-item")
+                this.inputWrapper.append(newTask);
+                newTask.setAttribute('data-name', `${this.input.value}`);
 
-                myTodoList.addTodo(input.value);
-                let currentId = myTodoList.getTodoId(newTask);
+                this.myTodoList.addTodo(this.input.value);
+                let currentId = this.myTodoList.getTodoId(newTask);
 
-
-                let textLine = document.createElement("p");
-                textLine.classList.add("text-item");
-                textLine.innerHTML = input.value;
+                let textLine = this.createElement("p", "text-item")
+                textLine.innerHTML = this.input.value;
                 newTask.append(textLine);
 
-
-                let inputRadio = document.createElement("input");
+                let inputRadio = this.createElement("input", "checkbox");
                 inputRadio.setAttribute('type', 'checkbox');
-                inputRadio.classList.add("checkbox");
                 newTask.prepend(inputRadio);
 
-                let deleteButton = document.createElement("button");
-                deleteButton.classList.add("delete-button");
+                let deleteButton = this.createElement("button", "delete-button");
                 deleteButton.innerHTML = "x";
                 textLine.append(deleteButton);
 
-                input.value = "";
+                this.input.value = "";
 
-                inputRadio.addEventListener("click", function () {
-                    myTodoList.toggleCheckTodo(currentId);
-                    if (inputRadio.checked) {
-                        textLine.classList.add("checked");
-                    } else {
-                        textLine.classList.remove("checked");
-                    }
-                })
-
-                deleteButton.addEventListener("click", function () {
-                    if (inputRadio.checked) {
-                        newTask.remove();
-                        myTodoList.removeTodo(currentId);
-                    }
-                })
             }
         })
     }
+
+    handleToggleTodo () {
+        this.inputWrapper.addEventListener("click", event => {
+            if (event.target.className === "checkbox") {
+                let elem = event.target.closest('div');
+                let currentId = this.myTodoList.getTodoId(elem);
+                this.myTodoList.toggleCheckTodo(currentId);
+                let inputRadio = elem.firstChild;
+                let textLine = elem.lastChild;
+                if (inputRadio.checked) {
+                    textLine.classList.add("checked");
+                } else {
+                    textLine.classList.remove("checked");
+                }
+            }
+        })
+    }
+
+    handleDeleteTodo () {
+
+        this.inputWrapper.addEventListener("click", event => {
+            if (event.target.className === "delete-button") {
+                let elem = event.target.closest('div');
+                let inputRadio = elem.firstChild;
+                let currentId = this.myTodoList.getTodoId(elem);
+                if (inputRadio.checked) {
+                    elem.remove();
+                    this.myTodoList.removeTodo(currentId);
+                }
+            }
+        })
+    }
+
+
 }
 
 
-let task1 = new TodoItem();
-task1.handleSubmit();
-
-
+let currentTasks = new TodoItem();
+currentTasks.handleSubmit();
+currentTasks.handleToggleTodo();
+currentTasks.handleDeleteTodo();
 
 
